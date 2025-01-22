@@ -1,6 +1,8 @@
 import axios from "axios";
+import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import './App.css';
+import { config } from "./utils/config.js";
 
 const App = () => {
   const [wordLength, setWordLength] = useState(null);
@@ -8,20 +10,46 @@ const App = () => {
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [feedback, setFeedback] = useState([]);
-  const [gameOver, setGameOver] = useState(false);
+  const [gameOver, setGameOver] = useState(Cookies.get("gameOver") === "true");
   const [notification, setNotification] = useState("");
   const maxGuesses = 6;
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
+  const isDebug = config.debugMode;
 
   // Fetch word length on load
   useEffect(() => {
-    axios.get("http://localhost:5000/api/word-length").then((response) => {
-      setWordLength(response.data.length);
-    });
+    // Load saved game state from localStorage
+    const savedGameData = localStorage.getItem("wordMorphGameState");
 
-    axios.get("http://localhost:5000/api/word").then((response) => {
-      setDailyWord(response.data.word);
-    });
+    if (savedGameData) {
+      const parsedData = JSON.parse(savedGameData);
+
+      // Restore the game state
+      setWordLength(parsedData.wordLength);
+      setDailyWord(parsedData.dailyWord);
+      setGuesses(parsedData.guesses);
+      setFeedback(parsedData.feedback);
+      setCurrentGuess(parsedData.currentGuess);
+      setGameOver(parsedData.gameOver);
+      setNotification(parsedData.notification);
+    } else {
+
+      axios.get("http://localhost:5000/api/word-length").then((response) => {
+        setWordLength(response.data.length);
+      });
+
+      axios.get("http://localhost:5000/api/word").then((response) => {
+        setDailyWord(response.data.word);
+      });
+
+    }
+
+  }, []);
+
+  useEffect(() => {
+    if (gameOver && !notification.includes("You Won")) {
+      setNotification("You've already played today, come back tomorrow for the next WordMorph!");
+    }
   }, []);
 
   const handleInputChange = (e) => {
@@ -50,6 +78,12 @@ const App = () => {
       alert("The game is still loading. Please wait a moment.");
       return;
     }
+
+    if (!/^[a-zA-Z]+$/.test(currentGuess)) {
+      setNotification("❌ Only letters (A-Z) are allowed!");
+      return;
+    }
+
     if (currentGuess.length !== wordLength) {
       setNotification(`Enter a ${wordLength}-letter word!`);
       return;
@@ -61,17 +95,38 @@ const App = () => {
       return "gray";
     });
 
-    setGuesses([...guesses, currentGuess]);
-    setFeedback([...feedback, feedbackArray]);
-    setCurrentGuess("");
+    const updatedGuesses = [...guesses, currentGuess];
+    const updatedFeedback = [...feedback, feedbackArray];
+    let newGameOver = false;
+    let newNotification = "";
 
     if (currentGuess === dailyWord) {
-      setNotification("🎉 You Won! 🎉");
-      setGameOver(true);
-    } else if (guesses.length + 1 === maxGuesses) {
-      setNotification(`Game Over! The word was: ${dailyWord}`);
-      setGameOver(true);
+      newGameOver = true;
+      newNotification = "🎉 You Won! 🎉";
+      Cookies.set("gameOver", "true", { expires: 1 }); // Cookie expires in 1 day
+    } else if (updatedGuesses.length === maxGuesses) {
+      newGameOver = true;
+      newNotification = `Game Over! The word was: ${dailyWord}`;
+      Cookies.set("gameOver", "true", { expires: 1 });
     }
+
+    // Update state
+    setGuesses(updatedGuesses);
+    setFeedback(updatedFeedback);
+    setCurrentGuess("");
+    setGameOver(newGameOver);
+    setNotification(newNotification);
+
+    // Save updated game state in localStorage
+    localStorage.setItem("wordMorphGameState", JSON.stringify({
+      wordLength,
+      dailyWord,
+      guesses: updatedGuesses,
+      feedback: updatedFeedback,
+      currentGuess: "",
+      gameOver: newGameOver,
+      notification: newNotification,
+    }));
   };
 
   return (
@@ -147,6 +202,16 @@ const App = () => {
           )}
         </div>
       </div>
+      {
+        isDebug ?
+          <button onClick={() => {
+            localStorage.removeItem("wordMorphGameState");
+            Cookies.remove("gameOver");
+            window.location.reload();
+          }} className="button" style={{ marginTop: "20px" }}>
+            Reset Game
+          </button> : null
+      }
 
     </>
 

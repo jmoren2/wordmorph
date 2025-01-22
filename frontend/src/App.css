@@ -223,7 +223,7 @@ h1 {
   font-size: 18px;
   font-weight: bold;
   border: 4px solid black;
-  background-color: #444;
+  background-color: #787c7e;
   color: white;
   box-shadow: 4px 4px 0px black;
   text-transform: uppercase;
@@ -235,7 +235,7 @@ h1 {
 }
 
 .key.absent {
-  background-color: #787c7e; /* Gray */
+  background-color: #444; /* Gray */
 }
 
 .key.correct {
