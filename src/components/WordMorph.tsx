@@ -1,13 +1,15 @@
+"use client"
+
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
-import './App.css';
-import { config } from "./utils/config.js";
+import { config } from "../utils/config";
+import NavigationButton from "./NavigationButton";
 
-const App = () => {
+export default function WordMorph({ user }: { user: any }) {
   const [wordLength, setWordLength] = useState(null);
   const [dailyWord, setDailyWord] = useState(""); // Store the word of the day
-  const [guesses, setGuesses] = useState([]);
+  const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [feedback, setFeedback] = useState([]);
   const [gameOver, setGameOver] = useState(Cookies.get("gameOver") === "true");
@@ -34,11 +36,13 @@ const App = () => {
       setNotification(parsedData.notification);
     } else {
 
-      axios.get("http://localhost:5000/api/word-length").then((response) => {
+      axios.get("/api/word-length").then((response) => {
+        console.log(response);
+
         setWordLength(response.data.length);
       });
 
-      axios.get("http://localhost:5000/api/word").then((response) => {
+      axios.get("/api/word").then((response) => {
         setDailyWord(response.data.word);
       });
 
@@ -52,14 +56,14 @@ const App = () => {
     }
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: { target: { value: string; }; }) => {
     const value = e.target.value.toLowerCase();
     if (value.length <= wordLength) {
       setCurrentGuess(value);
     }
   };
 
-  const getLetterStatus = (letter) => {
+  const getLetterStatus = (letter: string) => {
     if (guesses.some((word) => word.includes(letter))) {
       if (dailyWord.includes(letter)) {
         return "present";
@@ -133,8 +137,11 @@ const App = () => {
     <>
       <div className="App">
         <div className="nes-box">
-          <h1>WordMorph</h1>
-          <p>Today's Word Length: {wordLength || "Loading..."}</p>
+          <div className="header-container">
+            <NavigationButton text="BACK" path="/" classes="nav-button signout-button" />
+            <h1>WordMorph</h1>
+          </div>
+          <p>Today&apos;s Word Length: {wordLength || "Loading..."}</p>
 
           {/* Game Grid */}
           <div className="grid">
@@ -217,5 +224,3 @@ const App = () => {
 
   );
 };
-
-export default App;
