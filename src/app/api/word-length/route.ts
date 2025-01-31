@@ -1,4 +1,4 @@
-import { getDailyWord } from "../../../utils/wordService";
+import { getDailyWord } from "../../../services/wordService";
 
 export async function GET() {
   const { length } = await getDailyWord();

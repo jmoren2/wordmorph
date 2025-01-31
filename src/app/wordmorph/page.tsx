@@ -1,7 +1,7 @@
 import WordMorph from "@/components/WordMorph";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "../../lib/auth";
 
 export default async function WordMorphPage() {
   const session = await getServerSession(authOptions);

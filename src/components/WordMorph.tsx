@@ -1,22 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { config } from "../utils/config";
+import LoadingSpinner from "./LoadingSpinner/LoadingSpinner";
 import NavigationButton from "./NavigationButton";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function WordMorph({ user }: { user: any }) {
   const [wordLength, setWordLength] = useState(null);
   const [dailyWord, setDailyWord] = useState(""); // Store the word of the day
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
-  const [feedback, setFeedback] = useState([]);
+  const [feedback, setFeedback] = useState<(string)[][]>([]);
   const [gameOver, setGameOver] = useState(Cookies.get("gameOver") === "true");
   const [notification, setNotification] = useState("");
-  const maxGuesses = 6;
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
   const isDebug = config.debugMode;
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch word length on load
   useEffect(() => {
@@ -47,7 +50,7 @@ export default function WordMorph({ user }: { user: any }) {
       });
 
     }
-
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export default function WordMorph({ user }: { user: any }) {
 
   const handleInputChange = (e: { target: { value: string; }; }) => {
     const value = e.target.value.toLowerCase();
-    if (value.length <= wordLength) {
+    if (value.length <= (wordLength || 0)) {
       setCurrentGuess(value);
     }
   };
@@ -84,7 +87,7 @@ export default function WordMorph({ user }: { user: any }) {
     }
 
     if (!/^[a-zA-Z]+$/.test(currentGuess)) {
-      setNotification("❌ Only letters (A-Z) are allowed!");
+      setNotification("❌ Only letters (A-Z) are allowed! ❌");
       return;
     }
 
@@ -108,7 +111,7 @@ export default function WordMorph({ user }: { user: any }) {
       newGameOver = true;
       newNotification = "🎉 You Won! 🎉";
       Cookies.set("gameOver", "true", { expires: 1 }); // Cookie expires in 1 day
-    } else if (updatedGuesses.length === maxGuesses) {
+    } else if (updatedGuesses.length === wordLength) {
       newGameOver = true;
       newNotification = `Game Over! The word was: ${dailyWord}`;
       Cookies.set("gameOver", "true", { expires: 1 });
@@ -138,65 +141,76 @@ export default function WordMorph({ user }: { user: any }) {
       <div className="App">
         <div className="nes-box">
           <div className="header-container">
-            <NavigationButton text="BACK" path="/" classes="nav-button signout-button" />
+            {!isLoading &&
+              <NavigationButton text="BACK" path="/" classes="nav-button secondary-button" />
+            }
             <h1>WordMorph</h1>
           </div>
-          <p>Today&apos;s Word Length: {wordLength || "Loading..."}</p>
 
-          {/* Game Grid */}
-          <div className="grid">
-            {
-              Array.from({ length: maxGuesses }).map((_, rowIndex) => (
-                <div key={rowIndex} className="grid-row">
-                  {Array.from({ length: wordLength || 0 }).map((_, colIndex) => {
-                    const feedbackClass = guesses[rowIndex]
-                      ? feedback[rowIndex][colIndex] === "green"
-                        ? "correct"
-                        : feedback[rowIndex][colIndex] === "yellow"
-                          ? "present"
-                          : "absent"
-                      : "white";
-                    return (
-                      <div
-                        key={colIndex} className={`grid-cell ${guesses[rowIndex] ? feedbackClass : ""}`} >
-                        {
-                          guesses[rowIndex]?.[colIndex] || ""
-                        }
-                      </div>
-                    );
-                  }
-                  )}
-                </div>
-              ))}
-          </div>
-          <div className="keyboard">
-            {alphabet.split("").map((letter) => (
-              <div key={letter} className={`key ${getLetterStatus(letter)}`}>
-                {letter.toUpperCase()}
+
+          {!isLoading ?
+            <div>
+              <p>Today&apos;s Word Length: {wordLength || "Loading..."}</p>
+
+              {/* Game Grid */}
+              <div className="grid">
+                {
+                  Array.from({ length: wordLength || 0 }).map((_, rowIndex) => (
+                    <div key={rowIndex} className="grid-row">
+                      {Array.from({ length: wordLength || 0 }).map((_, colIndex) => {
+                        const feedbackClass = guesses[rowIndex]
+                          ? feedback[rowIndex][colIndex] === "green"
+                            ? "correct"
+                            : feedback[rowIndex][colIndex] === "yellow"
+                              ? "present"
+                              : "absent"
+                          : "white";
+                        return (
+                          <div
+                            key={colIndex} className={`grid-cell ${guesses[rowIndex] ? feedbackClass : ""}`} >
+                            {
+                              guesses[rowIndex]?.[colIndex] || ""
+                            }
+                          </div>
+                        );
+                      }
+                      )}
+                    </div>
+                  ))}
               </div>
-            ))}
-          </div>
-          <div className="input-container">
-            <input
-              type="text"
-              value={currentGuess}
-              onChange={handleInputChange}
-              maxLength={wordLength || 0}
-              disabled={!wordLength || gameOver}
-              placeholder={`Enter a ${wordLength || 0}-letter word`}
-              className="input-box"
-            />
-            <button
-              onClick={handleSubmit}
-              className="button"
-              disabled={gameOver}
-            >
-              Submit
-            </button>
-          </div>
+              <div className="keyboard">
+                {alphabet.split("").map((letter) => (
+                  <div key={letter} className={`key ${getLetterStatus(letter)}`}>
+                    {letter.toUpperCase()}
+                  </div>
+                ))}
+              </div>
+              <div className="input-container">
+                <input
+                  type="text"
+                  value={currentGuess}
+                  onChange={handleInputChange}
+                  maxLength={wordLength || 0}
+                  disabled={!wordLength || gameOver}
+                  placeholder={`Enter a ${wordLength || 0}-letter word`}
+                  className="input-box"
+                />
+                <button
+                  onClick={handleSubmit}
+                  className="button"
+                  disabled={gameOver}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+            : <LoadingSpinner />
+          }
+
           {notification && (
             <div className="nes-box notification">
               {notification}
+              <br />
               <button onClick={() => setNotification("")} className="nes-button">
                 OK
               </button>
@@ -204,7 +218,7 @@ export default function WordMorph({ user }: { user: any }) {
           )}
           <div className="crt"></div>
 
-          {guesses.length >= maxGuesses && (
+          {wordLength !== null && guesses.length >= wordLength && (
             <p style={{ marginTop: "20px", fontSize: "18px" }}>Game Over! Try again tomorrow.</p>
           )}
         </div>

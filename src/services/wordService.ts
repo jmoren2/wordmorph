@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const WORDNIK_API_KEY = process.env.WORDNIK_API_KEY;
 const WORDNIK_RANDOM_WORDS_URL = "https://api.wordnik.com/v4/words.json/randomWords";
@@ -6,7 +7,7 @@ const WORDNIK_WORD_DEFINITION_URL = "https://api.wordnik.com/v4/word.json/{}/def
 const wordLengths = [4, 5, 6, 7];
 
 // In-memory cache
-const dailyWordCache = {
+const dailyWordCache: any = {
   date: null,
   word: null,
   length: null,
@@ -28,13 +29,12 @@ export async function getDailyWord() {
   // Determine word length for today
   const wordLength = wordLengths[new Date().getDate() % wordLengths.length];
 
-  const params = new URLSearchParams({
-    api_key: WORDNIK_API_KEY,
-    minLength: wordLength,
-    maxLength: wordLength,
-    hasDictionaryDef: "true",
-    limit: "10", // Fetch multiple words for filtering
-  });
+  const params = new URLSearchParams();
+  params.append("api_key", WORDNIK_API_KEY || "");
+  params.append("minLength", wordLength.toString());
+  params.append("maxLength", wordLength.toString());
+  params.append("hasDictionaryDef", "true");
+  params.append("limit", "10"); 
 
   for (let i = 0; i < 10; i++) {
     try {
@@ -73,14 +73,14 @@ export async function getDailyWord() {
   return { word: null, length: wordLength };
 }
 
-function isValidWord(word) {
+function isValidWord(word: string) {
   /**
    * Check if the word is valid: no spaces, numbers, or special characters.
    */
   return /^[A-Za-z]+$/.test(word);
 }
 
-async function wordHasDefinition(word) {
+async function wordHasDefinition(word: string) {
   /**
    * Check if a word has a valid definition in the dictionary.
    */

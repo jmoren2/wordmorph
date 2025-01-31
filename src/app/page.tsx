@@ -3,9 +3,6 @@
 import NavigationButton from "@/components/NavigationButton";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-// interface ServerSideProps {
-//   session: Session | null;
-// }
 export default function App() {
   const { data: session } = useSession();
   return (
@@ -20,18 +17,24 @@ export default function App() {
           {
             session ?
               <>
-               <NavigationButton text="PLAY NOW" path="/wordmorph" /><br />
-
-              <p> Signed in as {session?.user?.email} <br />
-              {session?.user?.name} <br /></p> 
-                <button className="signout-button" onClick={() => signOut()}>Sign out</button>
+                <NavigationButton text="PLAY NOW" path="/wordmorph" /><br />
+                <p> Signed in as {session?.user?.email} <br />
+                  {session?.user?.name} <br /></p>
+                <button className="secondary-button" onClick={() => signOut()}>Sign out</button>
               </>
 
               :
-              <>
+              <div>
                 Not signed in <br />
-                <button className="button" onClick={() => signIn(undefined, { callbackUrl: "/wordmorph" })}>Sign in</button>
-              </>}
+                <button className="button" onClick={() => signIn(undefined, { callbackUrl: "/wordmorph" })}>Sign in</button><br />
+                <>
+                  <br />
+                  Don&apos;t have an account?
+                  <br />
+                  <NavigationButton text="SIGN UP" path="/signup" classes="nav-button" />
+                </>
+              </div>
+          }
         </div>
       </div>
     </>

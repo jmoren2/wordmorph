@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql" // Change to "mysql" if using MySQL
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String // For hashed passwords
+  createdAt DateTime @default(now())
+  Game      Game?
+}
+
+model Game {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  streak     Int      @default(0)
+  lastPlayed DateTime
+  createdAt  DateTime @default(now())
+}
