@@ -10,5 +10,5 @@ export default async function WordMorphPage() {
     redirect("/api/auth/signin"); // Redirect to login if not authenticated
   }
 
-  return( <WordMorph user={session.user} />);
+  return( <WordMorph session={session} />);
 }

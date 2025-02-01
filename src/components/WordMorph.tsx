@@ -9,9 +9,9 @@ import LoadingSpinner from "./LoadingSpinner/LoadingSpinner";
 import NavigationButton from "./NavigationButton";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function WordMorph({ user }: { user: any }) {
+export default function WordMorph({ session }: { session: any }) {
   const [wordLength, setWordLength] = useState(null);
-  const [dailyWord, setDailyWord] = useState(""); // Store the word of the day
+  const [dailyWord, setDailyWord] = useState("");
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [feedback, setFeedback] = useState<(string)[][]>([]);
@@ -20,6 +20,19 @@ export default function WordMorph({ user }: { user: any }) {
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
   const isDebug = config.debugMode;
   const [isLoading, setIsLoading] = useState(true);
+  const [gameData, setGameData] = useState(null);
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    if (session) {
+      axios.get(`/api/game/${session.user.id}`).then((res) => {
+        if (res.data) {
+          setGameData(res.data);
+          setStreak(res.data.streak);
+        }
+      });
+    }
+  }, [session]);
 
   // Fetch word length on load
   useEffect(() => {
@@ -78,7 +91,7 @@ export default function WordMorph({ user }: { user: any }) {
   };
 
   // Handle guess submission
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (gameOver) return;
 
     if (!dailyWord) {
@@ -111,10 +124,28 @@ export default function WordMorph({ user }: { user: any }) {
       newGameOver = true;
       newNotification = "🎉 You Won! 🎉";
       Cookies.set("gameOver", "true", { expires: 1 }); // Cookie expires in 1 day
+      setStreak(streak + 1); // Increase streak
+
+      if (session?.user) {
+        await axios.post("/api/game/update", {
+          userId: session.user.id,
+          lastPlayed: new Date(),
+          streak: streak + 1,
+        });
+      }
     } else if (updatedGuesses.length === wordLength) {
       newGameOver = true;
       newNotification = `Game Over! The word was: ${dailyWord}`;
       Cookies.set("gameOver", "true", { expires: 1 });
+      setStreak(0); // Reset streak if the user loses
+
+      if (session?.user) {
+        await axios.post("/api/game/update", {
+          userId: session.user.id,
+          lastPlayed: new Date(),
+          streak: 0,
+        });
+      }
     }
 
     // Update state

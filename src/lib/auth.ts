@@ -5,6 +5,15 @@ import GithubProvider from "next-auth/providers/github";
 import { prisma } from "./prisma";
 
 export const authOptions: AuthOptions = {
+  callbacks: {
+    session: ({ session, token }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        id: token.sub,
+      },
+    }),
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -14,12 +23,16 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         const user = await prisma.user.findUnique({
-            where: { email: credentials?.email },
-          });
-          if (!user || !credentials?.password || !bcrypt.compareSync(credentials.password, user.password)) {
-            throw new Error("Invalid email or password");
-          }
-          return user;
+          where: { email: credentials?.email },
+        });
+        if (
+          !user ||
+          !credentials?.password ||
+          !bcrypt.compareSync(credentials.password, user.password)
+        ) {
+          throw new Error("Invalid email or password");
+        }
+        return user;
         // if (
         //   credentials?.email === "test@example.com" &&
         //   credentials?.password === "password123"
