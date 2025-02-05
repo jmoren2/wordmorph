@@ -30,6 +30,8 @@ export default function WordMorph({ session }: { session: any }) {
           setGameData(res.data);
           setStreak(res.data.streak);
         }
+      }).catch((e) => {
+        console.error("Failed to get game data: ", e);
       });
     }
   }, [session]);
@@ -53,8 +55,6 @@ export default function WordMorph({ session }: { session: any }) {
     } else {
 
       axios.get("/api/word-length").then((response) => {
-        console.log(response);
-
         setWordLength(response.data.length);
       });
 

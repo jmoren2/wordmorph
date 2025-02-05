@@ -16,6 +16,8 @@ export default function App() {
         if (res.data) {
           setStreak(res.data.streak);
         }
+      }).catch((e) => {
+        console.log("No game data found", e);
       });
     }
   }, [session]);
