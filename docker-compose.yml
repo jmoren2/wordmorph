@@ -27,7 +27,7 @@ services:
     volumes:
       - .:/home/node/app
       - /hom/node/app/node_modules
-    command: npm run dev
+    command: npm run start
 
 volumes:
   postgres_data:
