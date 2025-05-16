@@ -10,6 +10,9 @@ RUN npm install
 # Copy all application files
 COPY . .
 
+RUN npx prisma generate
+
+RUN npx prisma migrate
 # Build the Next.js application
 RUN npm run build
 
